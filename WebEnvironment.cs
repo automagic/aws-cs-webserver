@@ -11,7 +11,7 @@ public class WebEnvironment : ComponentResource
     public SecurityGroup SecurityGroup { get; set; }
 
     public WebEnvironment(string name, WebEnvironmentArgs args, ComponentResourceOptions? options = null) 
-        : base("custom:x:WebEnvirontment", name, options)
+        : base("custom:x:WebEnvironment", name, options)
     {
         this.Instances = new List<Instance>();
 
@@ -28,7 +28,11 @@ public class WebEnvironment : ComponentResource
             Parent = this,
         });
 
-        var sshKeyMaterial = new PrivateKey(name, new PrivateKeyArgs { Algorithm = "RSA", });
+        var sshKeyMaterial = new PrivateKey(name, new PrivateKeyArgs { 
+            Algorithm = "RSA", 
+        }, new CustomResourceOptions {
+             Parent = this 
+        });
 
         var sshKey = new KeyPair(name, new KeyPairArgs {
             PublicKey = sshKeyMaterial.PublicKeyOpenssh, 

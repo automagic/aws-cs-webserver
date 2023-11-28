@@ -27,6 +27,8 @@ public class LandingZone : ComponentResource
             LimitUnit = "USD",
             TimePeriodStart = "2010-01-01_00:00",
             TimeUnit = "MONTHLY",
+        }, new CustomResourceOptions {
+            Parent = this,
         });
 
         var azs = GetAvailabilityZones.Invoke(new (){ State = "available" }).Apply(result => result.ZoneIds.ToArray());
@@ -35,11 +37,15 @@ public class LandingZone : ComponentResource
             CidrBlock = args.CidrBlock,
             EnableDnsHostnames = true,
             Tags = args.Tags ?? new InputMap<string>{},
+        }, new CustomResourceOptions {
+            Parent = this,
         });
 
         var internetGateway = new InternetGateway(name, new InternetGatewayArgs{
             VpcId = this.Vpc.Id,
             Tags = args.Tags ?? new InputMap<string>{},
+        }, new CustomResourceOptions {
+            Parent = this.Vpc,
         });
 
         var publicSubnetRouteTable = new RouteTable($"{name}-public", new RouteTableArgs{
@@ -51,6 +57,8 @@ public class LandingZone : ComponentResource
             RouteTableId = publicSubnetRouteTable.Id,
             DestinationCidrBlock = "0.0.0.0/0",
             GatewayId = internetGateway.Id,
+        }, new CustomResourceOptions {
+            Parent = publicSubnetRouteTable,
         });
 
         for (var i = 0; i < args.PublicSubnetCidrBlocks.Length; i++) 
@@ -95,6 +103,8 @@ public class LandingZone : ComponentResource
                     SubnetId = publicSubnet.Id,
                     AllocationId = natEip.Id,
                     Tags = args.Tags ?? new InputMap<string>{},
+                }, new CustomResourceOptions {
+                    Parent = publicSubnet,
                 });
 
                 var privateSubnet = new Subnet($"{name}-private-{i}", new SubnetArgs {
