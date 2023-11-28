@@ -1,0 +1,3 @@
+name: aws-cs-webserver
+runtime: dotnet
+description: Demo Webserver in C#
