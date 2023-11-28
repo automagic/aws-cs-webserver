@@ -1,2 +1,0 @@
-config:
-  aws-cs-webserver:instanceCount: "1"

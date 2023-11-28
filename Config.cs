@@ -38,10 +38,6 @@ public static class Config {
         }
     }
 
-    public static void TagAllResources() {
-        //TODO
-    }
-
     public static bool IsTaggable(string t) {
         return TaggableResournces.Contains(t);
     }
