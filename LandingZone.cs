@@ -31,7 +31,10 @@ public class LandingZone : ComponentResource
             Parent = this,
         });
 
-        var azs = GetAvailabilityZones.Invoke(new (){ State = "available" }).Apply(result => result.ZoneIds.ToArray());
+        var available = GetAvailabilityZones
+            .Invoke(new (){ State = "available" });
+
+        var zones = new []{ "us-west-2a", "us-west-2b", "us-west-2c"};
 
         this.Vpc = new Vpc(name, new VpcArgs{
             CidrBlock = args.CidrBlock,
@@ -53,6 +56,14 @@ public class LandingZone : ComponentResource
             Tags = args.Tags ?? new InputMap<string>{},
         }, new CustomResourceOptions { Parent = this.Vpc });
 
+
+        var privateSubnetRouteTable = new RouteTable($"{name}-private", new RouteTableArgs {
+            VpcId = this.Vpc.Id,
+            Tags = args.Tags ?? new InputMap<string>{},
+        }, new CustomResourceOptions {
+            Parent = this.Vpc,
+        });
+        
         var publicSubnetRoute = new Route($"{name}-public", new RouteArgs {
             RouteTableId = publicSubnetRouteTable.Id,
             DestinationCidrBlock = "0.0.0.0/0",
@@ -63,11 +74,11 @@ public class LandingZone : ComponentResource
 
         for (var i = 0; i < args.PublicSubnetCidrBlocks.Length; i++) 
         {
-            var az = azs.Apply(l => l[i]);
+            var az = available.Apply(res => res.Names[i]);
 
             var publicSubnet = new Subnet($"{name}-public-{i}", new SubnetArgs {
                 VpcId = this.Vpc.Id,
-                AvailabilityZoneId = az,
+                AvailabilityZone = zones[i],
                 CidrBlock = args.PublicSubnetCidrBlocks[i],
                 MapPublicIpOnLaunch = true,
                 Tags = args.Tags ?? new InputMap<string>{},
@@ -109,7 +120,7 @@ public class LandingZone : ComponentResource
 
                 var privateSubnet = new Subnet($"{name}-private-{i}", new SubnetArgs {
                     VpcId = this.Vpc.Id,
-                    AvailabilityZoneId = az,
+                    AvailabilityZoneId = zones[i],
                     CidrBlock = args.PrivateSubnetCidrBlocks[i],
                     MapPublicIpOnLaunch = false,
                     Tags = args.Tags ?? new InputMap<string>{},
@@ -118,13 +129,6 @@ public class LandingZone : ComponentResource
                     DeleteBeforeReplace = true,
                 });
                 this.PrivateSubnets.Add(privateSubnet);
-
-                var privateSubnetRouteTable = new RouteTable($"{name}-private-{i}", new RouteTableArgs {
-                    VpcId = this.Vpc.Id,
-                    Tags = args.Tags ?? new InputMap<string>{},
-                }, new CustomResourceOptions {
-                    Parent = this.Vpc,
-                });
 
                 var privateSubnetRoute = new Route($"", new RouteArgs {
                     RouteTableId = privateSubnetRouteTable.Id,

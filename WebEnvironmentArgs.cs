@@ -20,4 +20,7 @@ public class WebEnvironmentArgs {
 
     [Input("SubnetIds", false, false)]
     public InputList<string>? SubnetIds { get; set; }
+
+    [Input("AvailabilityZones", false, false)]
+    public InputList<string>? AvailabilityZones {get; set;}
 }

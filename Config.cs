@@ -6,32 +6,15 @@ using Pulumi.Tls;
 
 public static class Config {
 
-    public static string ProjectName { get => ""; }
-
-    public static Output<string> UbuntuAmiId { 
-        get {
-            return GetAmi.Invoke(new GetAmiInvokeArgs {
-                Owners = new []{ "099720109477" },
-                MostRecent = true,
-                Filters = new InputList<Pulumi.Aws.Ec2.Inputs.GetAmiFilterInputArgs> {
-                    new Pulumi.Aws.Ec2.Inputs.GetAmiFilterInputArgs { 
-                        Name = "name",
-                        Values = new [] { "ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*" }
-                    }
-                }
-            }).Apply(it => it.Id);
-        }
-    }
-
     public static Output<string> AmazonAmiId { 
         get {
             return GetAmi.Invoke(new GetAmiInvokeArgs {
-                Owners = new []{ "099720109477" },
+                Owners = new []{ "137112412989" },
                 MostRecent = true,
                 Filters = new InputList<Pulumi.Aws.Ec2.Inputs.GetAmiFilterInputArgs> {
                     new Pulumi.Aws.Ec2.Inputs.GetAmiFilterInputArgs { 
                         Name = "name",
-                        Values = new [] { "amzn2-ami-hvm-2.0.*-x86_64-gp2" }
+                        Values = new [] { "amzn2-ami-minimal-hvm-*-x86_64-ebs" }
                     }
                 }
             }).Apply(it => it.Id);
