@@ -103,7 +103,7 @@ public class LandingZone : ComponentResource
              if (args.PrivateSubnetCidrBlocks.Length > 0)
              {
                 var natEip = new Eip($"{name}-public-{i}", new EipArgs {
-                    Vpc = true,
+                    Domain = "vpc",
                     Tags = args.Tags ?? new InputMap<string>{},
                 }, new CustomResourceOptions {
                     DependsOn = internetGateway,
@@ -120,7 +120,7 @@ public class LandingZone : ComponentResource
 
                 var privateSubnet = new Subnet($"{name}-private-{i}", new SubnetArgs {
                     VpcId = this.Vpc.Id,
-                    AvailabilityZoneId = zones[i],
+                    AvailabilityZone = zones[i],
                     CidrBlock = args.PrivateSubnetCidrBlocks[i],
                     MapPublicIpOnLaunch = false,
                     Tags = args.Tags ?? new InputMap<string>{},
@@ -130,7 +130,7 @@ public class LandingZone : ComponentResource
                 });
                 this.PrivateSubnets.Add(privateSubnet);
 
-                var privateSubnetRoute = new Route($"", new RouteArgs {
+                var privateSubnetRoute = new Route($"{name}-private-{i}", new RouteArgs {
                     RouteTableId = privateSubnetRouteTable.Id,
                     DestinationCidrBlock = "0.0.0.0/0",
                     NatGatewayId = natGateway.Id,
@@ -138,7 +138,7 @@ public class LandingZone : ComponentResource
                     Parent = privateSubnetRouteTable,
                 });
 
-                var privateSubnetRouteTableAssociation = new RouteTableAssociation("", new RouteTableAssociationArgs{
+                var privateSubnetRouteTableAssociation = new RouteTableAssociation($"{name}-private-{i}", new RouteTableAssociationArgs{
                     SubnetId = privateSubnet.Id,
                     RouteTableId = privateSubnetRouteTable.Id,
                 }, new CustomResourceOptions {

@@ -17,10 +17,9 @@ public class WebserverStack : Stack
       var web = new WebEnvironment(projectName, new WebEnvironmentArgs {
          ImageId = Config.AmazonAmiId,
          InstanceCount =  config.GetInt32("instanceCount") ?? 1,
-         SubnetIds = landingZone.PublicSubnets.Select(x => x.Id).ToArray(),
          VpcId = landingZone.Vpc.Id,
          VpcCidrBlock = landingZone.Vpc.CidrBlock,
-         AvailabilityZones = landingZone.PublicSubnets.Select(x => x.AvailabilityZoneId).ToList()
+         SubnetIds = landingZone.PublicSubnets.Select(x => x.Id).ToList(),
       });
    }
 
