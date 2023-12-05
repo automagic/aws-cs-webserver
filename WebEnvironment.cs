@@ -45,7 +45,7 @@ public class WebEnvironmentArgs
 
 
     [Input("InstanceSize", false, false)]
-    public Input<string> InstanceSize { get; init; }
+    public Input<string>? InstanceSize { get; init; }
 }
 
 public class WebEnvironment : ComponentResource
@@ -216,13 +216,13 @@ sudo systemctl start nginx
                 Name = args.Subdomain,
                 ZoneId = args.ZoneId,
                 Type = "A",
-                Aliases = [
+                Aliases = new InputList<RecordAliasArgs>() {
                     new RecordAliasArgs() {
                         ZoneId = alb.ZoneId,
                         Name = alb.DnsName,
                         EvaluateTargetHealth = true,
                     }
-                ],
+                },
             }, new CustomResourceOptions
             {
                 Parent = this
