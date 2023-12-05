@@ -1,35 +1,81 @@
 using System;
-using System.Collections.Generic;
 using System.Text;
 using Pulumi;
-using Pulumi.Aws;
 using Pulumi.Tls;
 using LB = Pulumi.Aws.LB;
 using Ec2 = Pulumi.Aws.Ec2;
 using AutoScaling = Pulumi.Aws.AutoScaling;
+using Pulumi.Aws.Route53;
+using Pulumi.Aws.Route53.Inputs;
+using Pulumi.Aws.AutoScaling.Inputs;
+using System.Runtime.CompilerServices;
+using System.Linq;
+
+public class WebEnvironmentArgs {
+
+    [Input("ImageId", false, false)]
+    public Input<string>? ImageId { get; set; }
+
+    [Input("InstanceCount", false, false)]
+    public int InstanceCount { get; set; }
+
+    [Input("VpcId", false, false)] 
+    public Input<string>? VpcId { get; set; }
+
+    [Input("VpcCidrBlock", false, false)]
+    public Input<string>? VpcCidrBlock { get; set; }
+
+    [Input("BaseTags", false, false)]
+    public InputMap<string>? BaseTags { get; set; }
+
+    [Input("PublicSubnetIds", false, false)]
+    public InputList<string>? PublicSubnetIds { get; set; }
+
+    [Input("PrivateSubnetIds", false, false)]
+    public InputList<string>? PrivateSubnetIds { get; set; }
+
+    [Input("Certificate", false, false)]
+    public Input<string>? CertificateArn { get; internal set; }
+
+    [Input("ZoneId", false, false)] 
+    public Input<string>? ZoneId { get; init; }
+
+    [Input("Subdomain", false, false)]
+    public Input<string>? Subdomain { get; init; }
+
+    [Input("AsgTags", false, false)]
+    public InputMap<string>? AsgTags { get; set; }
+}
 
 public class WebEnvironment : ComponentResource
 {
-    public List<Ec2.Instance> Instances { get; set; }
-
-    public Ec2.SecurityGroup SecurityGroup { get; set; }
 
     public WebEnvironment(string name, WebEnvironmentArgs args, ComponentResourceOptions? options = null) 
         : base("custom:x:WebEnvironment", name, options)
     {
-        this.Instances = new List<Ec2.Instance>();
 
-        this.SecurityGroup = new Ec2.SecurityGroup ($"{name}-sg", new Ec2.SecurityGroupArgs {
+        var albSg =  new Ec2.SecurityGroup ($"{name}-alb-sg", new Ec2.SecurityGroupArgs {
+            VpcId = args.VpcId,
+            Ingress = new []{
+                new Ec2.Inputs.SecurityGroupIngressArgs { Protocol = "TCP", FromPort = 443, ToPort = 443, CidrBlocks =new []{ "0.0.0.0/0"}},
+                new Ec2.Inputs.SecurityGroupIngressArgs { Protocol = "TCP", FromPort = 80, ToPort = 80, CidrBlocks = new []{"0.0.0.0/0"}},
+            },
+            Egress = new []{
+                    new Ec2.Inputs.SecurityGroupEgressArgs { Protocol = "-1", FromPort = 0, ToPort = 0,  CidrBlocks = new []{ "0.0.0.0/0" }}
+            }
+        });
+
+        var instanceSg = new Ec2.SecurityGroup ($"{name}-instance-sg", new Ec2.SecurityGroupArgs {
             VpcId = args.VpcId,
             Ingress = new []{
                 new Ec2.Inputs.SecurityGroupIngressArgs { Protocol = "TCP", FromPort = 22, ToPort = 22, CidrBlocks = new []{ args.VpcCidrBlock! }},
-                new Ec2.Inputs.SecurityGroupIngressArgs { Protocol = "TCP", FromPort = 80, ToPort = 80, CidrBlocks = new []{ args.VpcCidrBlock! }}
+                new Ec2.Inputs.SecurityGroupIngressArgs { Protocol = "TCP", FromPort = 80, ToPort = 80, SecurityGroups = albSg.Id},
             },
             Egress = new []{
                     new Ec2.Inputs.SecurityGroupEgressArgs { Protocol = "-1", FromPort = 0, ToPort = 0,  CidrBlocks = new []{ "0.0.0.0/0" }}
             }
         }, new CustomResourceOptions {
-            Parent = this,
+            Parent = this
         });
 
         var sshKeyMaterial = new PrivateKey(name, new PrivateKeyArgs { 
@@ -49,7 +95,7 @@ public class WebEnvironment : ComponentResource
             InstanceType = "t3.medium",
             ImageId = args.ImageId,
             KeyName = sshKey.KeyName,
-            VpcSecurityGroupIds = new[] { this.SecurityGroup.Id },
+            VpcSecurityGroupIds = new[] { instanceSg.Id },
             Tags = args.BaseTags ?? new InputMap<string>(),
             UserData =  Convert.ToBase64String(Encoding.UTF8.GetBytes(@$"
 #!/bin/bash
@@ -64,15 +110,16 @@ sudo systemctl start nginx
     
         var asg = new AutoScaling.Group($"{name}-asg", new()
         {
-            VpcZoneIdentifiers = args.SubnetIds!,
+            VpcZoneIdentifiers = args.PrivateSubnetIds!,
             DesiredCapacity = args.InstanceCount,
             MaxSize = args.InstanceCount,
             MinSize = 1,
-            LaunchTemplate = new AutoScaling.Inputs.GroupLaunchTemplateArgs
+            LaunchTemplate = new GroupLaunchTemplateArgs
             {
                 Id = launchTemplate.Id,
                 Version = "$Latest",
             },
+            Tags = args.AsgTags.Apply(x => x.Select( t => new GroupTagArgs { Key = t.Key, Value = t.Value, PropagateAtLaunch = true})),
         }, new CustomResourceOptions {
             Parent = this, 
         });
@@ -80,8 +127,8 @@ sudo systemctl start nginx
         var alb = new LB.LoadBalancer($"{name}-alb", new LB.LoadBalancerArgs {
             Internal = false,
             LoadBalancerType = "application",
-            SecurityGroups = new [] { this.SecurityGroup.Id },
-            Subnets = args.SubnetIds.Apply( sid => sid ),
+            SecurityGroups = new [] { albSg.Id },
+            Subnets = args.PublicSubnetIds.Apply( sid => sid ),
             
         }, new CustomResourceOptions {
             Parent = this, 
@@ -96,17 +143,40 @@ sudo systemctl start nginx
             Parent = this, 
         });
 
-        var listerner = new LB.Listener($"{name}-frontend-listener", new LB.ListenerArgs { 
+        var listener = new LB.Listener($"{name}-frontend-listener", new LB.ListenerArgs { 
         
             LoadBalancerArn = alb.Arn,
-            Port = 80,
-            Protocol = "HTTP",
+            Port = 443,
+            Protocol = "HTTPS",
+            CertificateArn = args.CertificateArn,
             DefaultActions = new[] {
                 new LB.Inputs.ListenerDefaultActionArgs {
                     Type = "forward",
                     TargetGroupArn = tg.Arn,
                 }
-            }
+            },
+        }, new CustomResourceOptions {
+            Parent = alb, 
+        });
+
+        var redirectListener = new LB.Listener("myAlbListener", new ()
+        {
+            LoadBalancerArn = alb.Arn,
+            DefaultActions = 
+            {
+                new LB.Inputs.ListenerDefaultActionArgs
+                {
+                    Type = "redirect",
+                    Redirect = new LB.Inputs.ListenerDefaultActionRedirectArgs
+                    {
+                        Protocol = "HTTPS",
+                        Port = "443",
+                        StatusCode = "HTTP_301"
+                    }
+                }
+            },
+            Port = 80,
+            Protocol = "HTTP"
         }, new CustomResourceOptions {
             Parent = alb, 
         });
@@ -118,6 +188,26 @@ sudo systemctl start nginx
         }, new CustomResourceOptions {
             Parent = asg 
         });
+
+        
+        if(args.ZoneId != null && args.Subdomain != null)
+        {
+            var arecord = new Record("alias", new()
+            {
+                Name = args.Subdomain,
+                ZoneId = args.ZoneId,
+                Type = "A",
+                Aliases = [
+                    new RecordAliasArgs() {
+                        ZoneId = alb.ZoneId,
+                        Name = alb.DnsName,
+                        EvaluateTargetHealth = true,
+                    }
+                ],
+            }, new CustomResourceOptions {
+                Parent = this 
+            });
+        }
 
         this.RegisterOutputs();
     }

@@ -1,4 +1,3 @@
-﻿using System.Linq;
-using Pulumi;
+﻿using Pulumi;
 
 return await Deployment.RunAsync<WebserverStack>();

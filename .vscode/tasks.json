@@ -7,7 +7,7 @@
             "type": "process",
             "args": [
                 "build",
-                "${workspaceFolder}/aws-cs-webserver.csproj",
+                "${workspaceFolder}/WebAutoscaling.csproj",
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary;ForceNoAlign"
             ],
@@ -19,7 +19,7 @@
             "type": "process",
             "args": [
                 "publish",
-                "${workspaceFolder}/aws-cs-webserver.csproj",
+                "${workspaceFolder}/WebAutoscaling.csproj",
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary;ForceNoAlign"
             ],
@@ -33,9 +33,48 @@
                 "watch",
                 "run",
                 "--project",
-                "${workspaceFolder}/aws-cs-webserver.csproj"
+                "${workspaceFolder}/WebAutoscaling.csproj"
             ],
             "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "PulumiWait",
+            "type": "shell",
+            "osx": {
+                "command": "sleep 3;",
+                "problemMatcher":  [
+                    {
+                        "pattern": [
+                            {
+                                "regexp": ".",
+                                "file": 1,
+                                "location": 2,
+                                "message": 3
+                            }
+                        ],
+                        "background": {
+                            "activeOnStart": true,
+                            "beginsPattern": ".",
+                            "endsPattern": "."
+                        }
+                    
+                    }
+                ]
+            },
+            "dependsOn": "PulumiPreview",
+            "presentation": {
+                "close": true
+            }
+        },
+        {
+            "label": "PulumiPreview",
+            "command": "pulumi preview",
+            "presentation": {
+                "reveal": "always",
+                "focus": true
+            },
+            "type": "shell",
+            "isBackground": true
         }
     ]
 }
