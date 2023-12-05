@@ -75,7 +75,7 @@ public class WebserverStack : Stack
       {
          ImageId = Helpers.AmazonAmiId,
          InstanceCount = config.GetInt32("instanceCount") ?? 1,
-         InstanceSize = "t3.medium",
+         InstanceSize = "t3.small",
          VpcId = vpcStack.RequireOutput("VpcId").Apply(o => (string)o),
          VpcCidrBlock = vpcStack.RequireOutput("CidrBlock").Apply(o => (string)o),
          PublicSubnetIds = vpcStack.RequireOutput("PublicSubnetIds").AsArray<string>(),
