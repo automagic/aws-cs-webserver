@@ -75,6 +75,7 @@ public class WebserverStack : Stack
       {
          ImageId = Helpers.AmazonAmiId,
          InstanceCount = config.GetInt32("instanceCount") ?? 1,
+         InstanceSize = "t3.medium",
          VpcId = vpcStack.RequireOutput("VpcId").Apply(o => (string)o),
          VpcCidrBlock = vpcStack.RequireOutput("CidrBlock").Apply(o => (string)o),
          PublicSubnetIds = vpcStack.RequireOutput("PublicSubnetIds").AsArray<string>(),
@@ -82,7 +83,7 @@ public class WebserverStack : Stack
          CertificateArn = certificate.certificateArn,
          ZoneId = hostedZone.Apply(z => z.ZoneId),
          Subdomain = subdomain,
-         AsgTags = tags
+         BaseTags = tags
       }, options);
 
       this.WebUrl = Output.Create($"https://{subdomain}");
