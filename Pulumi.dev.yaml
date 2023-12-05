@@ -1,4 +1,2 @@
-config:
-  aws:region: us-west-1
 environment:
   - aws-webdemo-dev
