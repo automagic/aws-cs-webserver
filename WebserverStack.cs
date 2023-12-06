@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Runtime.InteropServices.Marshalling;
 using Pulumi;
 using Pulumi.Aws;
 using Pulumi.Aws.Inputs;
