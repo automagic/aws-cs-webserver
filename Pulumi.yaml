@@ -3,5 +3,4 @@ runtime: dotnet
 description: Auto-scaling Webserver in C#.
 
 template:
-  displayName: AWS Web Autoscaling
   description: Auto-scaling Webserver in C#.
