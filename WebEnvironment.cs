@@ -132,7 +132,7 @@ sudo systemctl start nginx
             Tags = args.BaseTags.Apply(x => x.Select(t => new GroupTagArgs { Key = t.Key, Value = t.Value, PropagateAtLaunch = true })),
         }, new CustomResourceOptions
         {
-            Parent = this,
+            Parent = launchTemplate,
         });
 
         var alb = new LB.LoadBalancer($"{name}-alb", new LB.LoadBalancerArgs
@@ -158,7 +158,7 @@ sudo systemctl start nginx
             Parent = this,
         });
 
-        var listener = new LB.Listener($"{name}-frontend-listener", new LB.ListenerArgs
+        var listener = new LB.Listener($"{name}-frontend-https", new LB.ListenerArgs
         {
 
             LoadBalancerArn = alb.Arn,
@@ -176,7 +176,7 @@ sudo systemctl start nginx
             Parent = alb,
         });
 
-        var redirectListener = new LB.Listener("myAlbListener", new()
+        var redirectListener = new LB.Listener($"{name}-frontend-https-redirect", new()
         {
             LoadBalancerArn = alb.Arn,
             DefaultActions =
