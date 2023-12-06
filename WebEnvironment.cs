@@ -65,6 +65,9 @@ public class WebEnvironment : ComponentResource
             Egress = new[]{
                     new Ec2.Inputs.SecurityGroupEgressArgs { Protocol = "-1", FromPort = 0, ToPort = 0,  CidrBlocks = new []{ "0.0.0.0/0" }}
             }
+        }, new CustomResourceOptions
+        {
+            Parent = this
         });
 
         var instanceSg = new Ec2.SecurityGroup($"{name}-instance-sg", new Ec2.SecurityGroupArgs
