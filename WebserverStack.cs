@@ -34,7 +34,7 @@ public class WebserverStack : Stack
 
       var currentIdentity = GetCallerIdentity.Invoke();
 
-      var budget = new Pulumi.Aws.Budgets.Budget(projectName, new()
+      var budget = new Pulumi.Aws.Budgets.Budget($"{projectName}-budget", new()
       {
 
          AccountId = currentIdentity.Apply(result => result.AccountId),
