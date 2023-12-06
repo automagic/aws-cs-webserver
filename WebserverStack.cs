@@ -33,7 +33,6 @@ public class WebserverStack : Stack
 
       var options = new ComponentResourceOptions { Provider = awsProvider };
 
-
       var currentIdentity = GetCallerIdentity.Invoke();
 
       var budget = new Pulumi.Aws.Budgets.Budget(projectName, new()

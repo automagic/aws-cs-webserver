@@ -1,6 +1,6 @@
 name: aws-cs-web-asg
 runtime: dotnet
-description: ${DESCRIPTION}
+description: Auto-scaling Webserver in C#.
 
 template:
   displayName: AWS Web Autoscaling
