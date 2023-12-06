@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Pulumi;
 using Pulumi.Aws;
 using Pulumi.Aws.Inputs;
@@ -15,7 +16,7 @@ public class WebserverStack : Stack
 
       var config = new Pulumi.Config();
 
-      InputMap<string> tags = new InputMap<string> {
+      var tags = new Dictionary<string, string> {
          { "Environment", config.Require("environment") },
          { "Project", projectName },
          { "Stack", stackName},
@@ -30,7 +31,6 @@ public class WebserverStack : Stack
       });
 
       var options = new ComponentResourceOptions { Provider = awsProvider };
-
 
       var currentIdentity = GetCallerIdentity.Invoke();
 
@@ -75,6 +75,7 @@ public class WebserverStack : Stack
       {
          ImageId = Helpers.AmazonAmiId,
          InstanceCount = config.GetInt32("instanceCount") ?? 1,
+         InstanceSize = "t3.small",
          VpcId = vpcStack.RequireOutput("VpcId").Apply(o => (string)o),
          VpcCidrBlock = vpcStack.RequireOutput("CidrBlock").Apply(o => (string)o),
          PublicSubnetIds = vpcStack.RequireOutput("PublicSubnetIds").AsArray<string>(),
@@ -82,7 +83,7 @@ public class WebserverStack : Stack
          CertificateArn = certificate.certificateArn,
          ZoneId = hostedZone.Apply(z => z.ZoneId),
          Subdomain = subdomain,
-         AsgTags = tags
+         BaseTags = tags
       }, options);
 
       this.WebUrl = Output.Create($"https://{subdomain}");

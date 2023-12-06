@@ -1,3 +1,6 @@
 name: aws-cs-web-asg
 runtime: dotnet
-description: Demo Webserver in C#
+description: Auto-scaling Webserver in C#.
+
+template:
+  description: Auto-scaling Webserver in C#.
