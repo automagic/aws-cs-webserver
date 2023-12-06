@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Runtime.InteropServices.Marshalling;
 using Pulumi;
 using Pulumi.Aws;
 using Pulumi.Aws.Inputs;
@@ -15,7 +17,7 @@ public class WebserverStack : Stack
 
       var config = new Pulumi.Config();
 
-      InputMap<string> tags = new InputMap<string> {
+      var tags = new Dictionary<string, string> {
          { "Environment", config.Require("environment") },
          { "Project", projectName },
          { "Stack", stackName},
