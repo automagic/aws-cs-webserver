@@ -20,7 +20,6 @@ public class WebserverStack : Stack
          { "Environment", config.Require("environment") },
          { "Project", projectName },
          { "Stack", stackName},
-         { "ManagedBy", "Pulumi"},
       };
 
       var awsProvider = new Provider("aws-provider", new ProviderArgs {
