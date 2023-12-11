@@ -17,7 +17,6 @@ public class WebserverStack : Stack
       var config = new Pulumi.Config();
 
       var tags = new Dictionary<string, string> {
-         { "Environment", config.Require("environment") },
          { "Project", projectName },
          { "Stack", stackName},
       };
@@ -32,26 +31,6 @@ public class WebserverStack : Stack
       var options = new ComponentResourceOptions { Provider = awsProvider };
 
       var currentIdentity = GetCallerIdentity.Invoke();
-
-      var budget = new Pulumi.Aws.Budgets.Budget($"{projectName}-budget", new()
-      {
-
-         AccountId = currentIdentity.Apply(result => result.AccountId),
-         BudgetType = "COST",
-         LimitAmount = config.Get("budget") ?? "100.00",
-         LimitUnit = "USD",
-         TimePeriodStart = "2010-01-01_00:00",
-         TimeUnit = "MONTHLY",
-         CostFilters = new() {
-            new Pulumi.Aws.Budgets.Inputs.BudgetCostFilterArgs() {
-               Name = "TagKeyValue",
-               Values = "user:Project$ASGDemo"
-            }
-         }
-      }, new CustomResourceOptions()
-      {
-         Provider = awsProvider
-      });
 
       var vpcStack = new StackReference(config.Get("vpcStack")!);
 

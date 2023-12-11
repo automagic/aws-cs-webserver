@@ -1,2 +1,4 @@
+config:
+  aws-cs-web-asg:subDomain: dev
 environment:
   - aws-webdemo-dev

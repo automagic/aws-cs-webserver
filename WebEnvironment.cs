@@ -219,7 +219,7 @@ sudo systemctl start nginx
                 Name = args.Subdomain,
                 ZoneId = args.ZoneId,
                 Type = "A",
-                Aliases = new InputList<RecordAliasArgs>() {
+                Aliases = new () {
                     new RecordAliasArgs() {
                         ZoneId = alb.ZoneId,
                         Name = alb.DnsName,
